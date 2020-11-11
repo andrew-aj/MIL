@@ -68,3 +68,6 @@ model.compile(optimizer=tf.keras.optimizers.Adadelta(1), loss=tf.keras.losses.Sp
 
 #uncommet when input and data is avilable
 #model.fit({"colorInput": colorInput, "coordinateInput": coordinateInput, "modelInput": modelInput}, coordinates, epochs=10, batch_size=32)
+
+#https://www.tensorflow.org/guide/keras/functional
+#https://towardsdatascience.com/implementing-a-fully-convolutional-network-fcn-in-tensorflow-2-3c46fb61de3b
