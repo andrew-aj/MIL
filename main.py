@@ -5,13 +5,15 @@ def createConvLayer(dropout_rate, input, filters, kernel_size=2, strides=2):
     layer = tf.keras.layers.Conv2D(filters, kernel_size, strides)(input)
     layer = tf.keras.layers.Dropout(dropout_rate)(layer)
     layer = tf.keras.layers.BatchNormalization()(layer)
-    layer = tf.keras.layers.MaxPool2D()(layer)
     layer = tf.keras.layers.ReLU()(layer)
     return layer
 
 
-def createDenseLayer(dropout_rate, input, nodes):
-    layer = tf.keras.layers.Dense(nodes, activation='relu')(input)
+def createDenseLayer(dropout_rate, input, nodes, activationLayer=True):
+    if activationLayer:
+        layer = tf.keras.layers.Dense(nodes, activation='relu')(input)
+    else:
+        layer = tf.keras.layers.Dense(nodes)(input)
     layer = tf.keras.layers.Dropout(dropout_rate)(layer)
     return layer
 
@@ -39,23 +41,21 @@ def createModel(dropout_rate=0.15):
     modelLayers = createConvLayer(dropout_rate, modelLayers, 128)
     modelLayers = createConvLayer(dropout_rate, modelLayers, 256)
 
-    combinedLayers = tf.keras.layers.concatenate([colorLayers, coordinateLayers])
-    combinedLayers = createConvLayer(dropout_rate, combinedLayers, 32, 1, 1)
-    combinedLayers = createConvLayer(dropout_rate, combinedLayers, 64, 1, 1)
-    combinedLayers = createConvLayer(dropout_rate, combinedLayers, 128, 1, 1)
-    combinedLayers = createConvLayer(dropout_rate, combinedLayers, 256, 1, 1)
-
-    combinedLayers = tf.keras.layers.concatenate([combinedLayers, modelLayers])
-    combinedLayers = createConvLayer(dropout_rate, combinedLayers, 32, 1, 1)
-    combinedLayers = createConvLayer(dropout_rate, combinedLayers, 64, 1, 1)
-    combinedLayers = createConvLayer(dropout_rate, combinedLayers, 128, 1, 1)
-    combinedLayers = createConvLayer(dropout_rate, combinedLayers, 256, 1, 1)
-
-    combinedLayers = tf.keras.layers.GlobalMaxPooling2D()(combinedLayers)
-    combinedLayers = tf.keras.layers.Flatten()(combinedLayers)
-    combinedLayers = createDenseLayer(dropout_rate, combinedLayers, 128)
-    combinedLayers = createDenseLayer(dropout_rate, combinedLayers, 256)
+    combinedLayers = tf.keras.layers.concatenate([tf.keras.layers.GlobalMaxPooling2D()(colorLayers),
+                                                  tf.keras.layers.GlobalMaxPooling2D()(coordinateLayers)])
     combinedLayers = createDenseLayer(dropout_rate, combinedLayers, 512)
+    combinedLayers = createDenseLayer(dropout_rate, combinedLayers, 256)
+    combinedLayers = createDenseLayer(dropout_rate, combinedLayers, 128)
+
+    combinedLayers = tf.keras.layers.concatenate([combinedLayers, tf.keras.layers.GlobalMaxPooling2D()(modelLayers)])
+    combinedLayers = createDenseLayer(dropout_rate, combinedLayers, 512)
+    combinedLayers = createDenseLayer(dropout_rate, combinedLayers, 256)
+    combinedLayers = createDenseLayer(dropout_rate, combinedLayers, 128)
+
+
+    combinedLayers = createDenseLayer(dropout_rate, combinedLayers, 64, False)
+    combinedLayers = createDenseLayer(dropout_rate, combinedLayers, 32, False)
+    combinedLayers = createDenseLayer(dropout_rate, combinedLayers, 16, False)
 
     predictions = tf.keras.layers.Dense(6)(combinedLayers)
 
@@ -65,6 +65,7 @@ def createModel(dropout_rate=0.15):
 
 model = createModel()
 model.compile(optimizer=tf.keras.optimizers.Adadelta(1), loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False))
+print("done")
 
 #uncommet when input and data is avilable
 #model.fit({"colorInput": colorInput, "coordinateInput": coordinateInput, "modelInput": modelInput}, coordinates, epochs=10, batch_size=32)
