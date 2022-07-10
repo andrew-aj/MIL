@@ -21,7 +21,7 @@ def draw(img, corners, imgpts):
 
 criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 objp = np.zeros((9*6,3), np.float32)
-objp[:,:2] = np.mgrid[0:6,0:9].T.reshape(-1,2)
+objp[:,:2] = np.mgrid[0:6,0:9].T.reshape(-1,2) * 12 / 21
 axis = np.float32([[3,0,0], [0,3,0], [0,0,-3]]).reshape(-1,3)
 print(objp)
 
